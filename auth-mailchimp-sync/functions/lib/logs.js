@@ -58,3 +58,6 @@ exports.userRemoved = (userId, hashedEmail, audienceId) => {
 exports.userRemoving = (userId, hashedEmail, audienceId) => {
     firebase_functions_1.logger.log(`Removing user: ${userId} with hashed email: ${hashedEmail} from Mailchimp audience: ${audienceId}`);
 };
+exports.errorAddUserTags = (err) => {
+    firebase_functions_1.logger.error("Error when adding user tags in Mailchimp audience", err);
+};

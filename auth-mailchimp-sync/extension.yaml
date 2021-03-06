@@ -67,6 +67,12 @@ resources:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
 
+  - name: updateMember
+    type: firebaseextensions.v1beta.function
+    properties:
+      location: ${param:LOCATION}
+      runtime: nodejs10
+      httpsTrigger: {}
 params:
   - param: LOCATION
     label: Cloud Functions location

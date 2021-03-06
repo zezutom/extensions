@@ -79,3 +79,75 @@ exports.removeUserFromList = functions.handler.auth.user.onDelete(async (user) =
         logs.errorRemoveUser(err);
     }
 });
+exports.updateMember = functions.handler.https
+  .onCall(async (data, context) => {
+      try {
+        const firstName = data.firstName;
+        const lastName = data.lastName;
+        const email = data.email;
+        const tag = data.tag;
+
+        if (firstName && lastName && email) {
+          const email = data.email;
+          const hashed = crypto
+            .createHash("md5")
+            .update(email)
+            .digest("hex");
+
+          // Update first and last name
+          await mailchimp.put(
+            `/lists/${config_1.default.mailchimpAudienceId}/members/${hashed}`,
+            {
+              merge_fields: {
+                FNAME: firstName,
+                LNAME: lastName
+              }
+            }
+          );
+
+          if (tag) {
+            // Insert the new tag
+            let tags = [{ name: tag, status: 'active' }];
+
+            const tagsRes = await mailchimp.get(
+              `/lists/${config_1.default.mailchimpAudienceId}/members/${hashed}/tags`
+            );
+
+            if (tagsRes && tagsRes.tags) {
+              // Mark any previous tags for deletion
+              tagsRes.tags.forEach(tag => {
+                if (tag.name !== tag) {
+                  tags.push({ name: tag.name, status: 'inactive' });
+                }
+              });
+            }
+
+            // Tag the member
+            await mailchimp.post(
+              `/lists/${config_1.default.mailchimpAudienceId}/members/${hashed}/tags`,
+              {
+                tags: tags
+              }
+            );
+          }
+
+          logs.complete();
+          return {
+            success: true,
+            data: {},
+          }
+        } else {
+          logs.errorAddUserTags(new Error('Invalid input'));
+          return {
+            success: false,
+            error: "Invalid input"
+          };
+        }
+      } catch (err) {
+        logs.errorAddUserTags(err);
+        return {
+          success: false,
+          error: err.message
+        };
+      }
+  });
